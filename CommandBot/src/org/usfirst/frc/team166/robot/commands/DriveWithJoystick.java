@@ -16,14 +16,14 @@ public class DriveWithJoystick extends Command {
 
 	// Called just before this Command runs the first time
 	protected void initialize() {
-		Robot.driveTrain.initGyro();
 	}
 
 	// Called repeatedly when this Command is scheduled to run
 	protected void execute() {
 		Robot.driveTrain.mecanumDrive(Robot.oi.getJoystick());
 		Robot.driveTrain.getDistance();
-		Robot.driveTrain.getGyroAngle();
+		Robot.driveTrain.putAccelValues();
+		Robot.driveTrain.getGyro();
 	}
 
 	// Make this return true when this Command no longer needs to run execute()

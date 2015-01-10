@@ -31,12 +31,14 @@ public class Robot extends IterativeRobot {
 	 */
 	public void robotInit() {
 		oi = new OI();
+		driveTrain.gyro.initGyro();
 		// instantiate the command used for the autonomous period
 
 	}
 
 	public void disabledPeriodic() {
 		Scheduler.getInstance().run();
+		driveTrain.gyro.reset();
 	}
 
 	public void autonomousInit() {
