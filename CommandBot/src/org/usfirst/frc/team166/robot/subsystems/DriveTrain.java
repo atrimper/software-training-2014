@@ -12,13 +12,13 @@ import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.RobotDrive.MotorType;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
+import java.lang.Math;
 /**
  *
  */
 public class DriveTrain extends Subsystem {
 	RobotDrive robotDrive;
-	Gyro gyro;
+	public Gyro gyro;
 	PowerDistributionPanel pdp;
 	AnalogInput rangefinder;
 	BuiltInAccelerometer accel;
@@ -45,10 +45,12 @@ public class DriveTrain extends Subsystem {
 		robotDrive.setInvertedMotor(MotorType.kRearRight, true);
 
 	}
-
+	
 	public void mecanumDrive(Joystick stick) {
-		robotDrive.mecanumDrive_Cartesian(stick.getX(), stick.getY(),
-				stick.getRawAxis(3), 0);
+		if((Math.abs(stick.getX()) > .1) || (Math.abs(stick.getY()) > .1) || (Math.abs(stick.getRawAxis(3)) > .1)){
+			robotDrive.mecanumDrive_Cartesian(stick.getX(), stick.getY(),
+					stick.getRawAxis(3), 0);
+		}
 	}
 
 	public void driveForward() {
@@ -70,11 +72,17 @@ public class DriveTrain extends Subsystem {
 		gyro.setSensitivity(.0125);
 
 	}
+	public void getGyro(){
+		SmartDashboard.putNumber("Gyro", gyro.getAngle());
+	}
 
-	public void getGyroAngle() {
+	public void putAccelValues() {
 		SmartDashboard.putNumber("X:", accel.getX());
 		SmartDashboard.putNumber("Y:", accel.getY());
 		SmartDashboard.putNumber("Z:", accel.getZ());
+	}
+	public void getDistanceTraveled(){
+		//private double XDistance = accel.getX()
 	}
 
 	public void initDefaultCommand() {
