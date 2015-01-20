@@ -7,9 +7,13 @@ import edu.wpi.first.wpilibj.command.Command;
 /**
  *
  */
-public class DriveWithJoystick extends Command {
+public class StrafeDirection extends Command {
+	private int strafeDirection;
+	private double strafePower;
 
-	public DriveWithJoystick() {
+	public StrafeDirection(int direction, double power) {
+		this.strafeDirection = direction;
+		this.strafePower = power;
 		// Use requires() here to declare subsystem dependencies
 		requires(Robot.driveTrain);
 	}
@@ -20,18 +24,9 @@ public class DriveWithJoystick extends Command {
 
 	// Called repeatedly when this Command is scheduled to run
 	protected void execute() {
-		if (Robot.driveTrain.toggleFPSDrive()){
-			Robot.driveTrain.xboxDrive(Robot.oi.getXbox());
-		}
-		else {
-			Robot.driveTrain.mecanumDrive(Robot.oi.getJoystick());
-		}
-		Robot.driveTrain.mecanumDrive(Robot.oi.getJoystick());
-		Robot.driveTrain.getDistance();
-		Robot.driveTrain.putAccelValues();
-		Robot.driveTrain.getGyro();
+		Robot.driveTrain.strafeWithGyro(strafeDirection,strafePower);
 		Robot.driveTrain.printEncoderValues();
-		Robot.driveTrain.printAnalogValue();
+		
 	}
 
 	// Make this return true when this Command no longer needs to run execute()
@@ -41,6 +36,7 @@ public class DriveWithJoystick extends Command {
 
 	// Called once after isFinished returns true
 	protected void end() {
+
 	}
 
 	// Called when another command which requires one or more of the same
