@@ -13,14 +13,14 @@ public class PIDSpeedController implements SpeedController {
 	public PIDSpeedController(PIDSource source,PIDOutput output,String controllerName){
 //		controller = new PIDController(Preferences.getInstance().getDouble("P", 0),Preferences.getInstance().getDouble("I", 0),
 //				Preferences.getInstance().getDouble("D", 0),Preferences.getInstance().getDouble("F", 0),source,output);
-		controller = new PIDController(0,0,0,0,source,output);
+		controller = new PIDController(2,0,0,1,source,output);
 		//LiveWindow.addActuator("Drive", "FrontLeft", controller);
 		LiveWindow.addActuator("Drive", controllerName, controller);
 		
 	}
 	public void setConstants(){
-		controller.setPID(Preferences.getInstance().getDouble("P", 0),Preferences.getInstance().getDouble("I", 0),
-				Preferences.getInstance().getDouble("D", 0),Preferences.getInstance().getDouble("F", 0));
+//		controller.setPID(Preferences.getInstance().getDouble("P", 0),Preferences.getInstance().getDouble("I", 0),
+//				Preferences.getInstance().getDouble("D", 0),Preferences.getInstance().getDouble("F", 0));
 	}
 	@Override
 	public void pidWrite(double output) {

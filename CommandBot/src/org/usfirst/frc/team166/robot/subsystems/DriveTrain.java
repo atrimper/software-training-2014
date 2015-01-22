@@ -70,13 +70,17 @@ public class DriveTrain extends Subsystem {
 		//ENCODER MATH
 		frontLeftEncoder.setDistancePerPulse(((6*Math.PI)/1024) / 183);
 		frontLeftEncoder.setPIDSourceParameter(PIDSourceParameter.kRate);
+		frontRightEncoder.setDistancePerPulse(((6*Math.PI)/1024) / 183);
+		frontRightEncoder.setPIDSourceParameter(PIDSourceParameter.kRate);
+		rearLeftEncoder.setDistancePerPulse(((6*Math.PI)/1024) / 183);
+		rearLeftEncoder.setPIDSourceParameter(PIDSourceParameter.kRate);
 		rearRightEncoder.setDistancePerPulse(((6*Math.PI)/1024) / 183);
 		rearRightEncoder.setPIDSourceParameter(PIDSourceParameter.kRate);
 		
 		//PID SPEED CONTROLLERS
 		frontLeftPID = new PIDSpeedController(frontLeftEncoder,frontLeftTalon,"frontLeft");
-		//frontRightPID = new PIDSpeedController(frontRightEncoder,frontRightTalon);
-		//rearLeftPID = new PIDSpeedController(rearLeftEncoder,rearLeftTalon);
+		frontRightPID = new PIDSpeedController(frontRightEncoder,frontRightTalon,"frontRight");
+		rearLeftPID = new PIDSpeedController(rearLeftEncoder,rearLeftTalon,"rearLeft");
 		rearRightPID = new PIDSpeedController(rearRightEncoder,rearRightTalon,"rearRight");
 		
 		//OTHER SENSORS
@@ -85,8 +89,8 @@ public class DriveTrain extends Subsystem {
 		accel = new BuiltInAccelerometer();
 		gyro = new Gyro(0);
 		//DRIVE DECLARATION
-		robotDrive = new RobotDrive(frontLeftPID, rearLeftTalon,
-				frontRightTalon, rearRightPID);
+		robotDrive = new RobotDrive(frontLeftPID, rearLeftPID,
+				frontRightPID, rearRightPID);
 		robotDrive.setExpiration(0.1);
 		//MOTOR INVERSIONS
 		robotDrive.setInvertedMotor(MotorType.kFrontRight, true);
@@ -121,7 +125,7 @@ public class DriveTrain extends Subsystem {
 		robotDrive.mecanumDrive_Cartesian(0.0, .25, 0.0, 0);
 	}
 	public void strafeWithGyro(int direction,double power){ // -1 is left, 1 is right //Not using power right now for testing
-		gyroOffset = (getGyro() * Preferences.getInstance().getDouble("GyroStrafeConstant", .0111111));
+		gyroOffset = (getGyro() * Preferences.getInstance().getDouble("GyroStrafeConstant", .01111111111));
 		if(Math.abs(gyroOffset) > 1){
 			gyroOffset = (Math.abs(gyroOffset)/gyroOffset);
 		}
@@ -159,10 +163,12 @@ public class DriveTrain extends Subsystem {
 		return gyro.getAngle();
 	}
 	public void printEncoderValues(){
-		SmartDashboard.putNumber("Encoder Distance", frontLeftEncoder.getDistance());
-		SmartDashboard.putNumber("Encoder Speed", frontLeftEncoder.getRate());
 		double inchesTraveled = (frontLeftEncoder.getDistance() / 1024) * (2 * Preferences.getInstance().getDouble("WheelRadius", 3) * Math.PI);
 		SmartDashboard.putNumber("Inches Traveled", inchesTraveled);
+		SmartDashboard.putNumber("Encoder Speed FL", frontLeftEncoder.getRate());
+		SmartDashboard.putNumber("Encoder Speed FR", frontRightEncoder.getRate());
+		SmartDashboard.putNumber("Encoder Speed RR", rearRightEncoder.getRate());
+		SmartDashboard.putNumber("Encoder Speed RL", rearLeftEncoder.getRate());
 	}
 	public void putAccelValues() {
 		SmartDashboard.putNumber("X:", accel.getX());
