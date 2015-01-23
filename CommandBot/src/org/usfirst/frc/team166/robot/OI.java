@@ -2,6 +2,8 @@ package org.usfirst.frc.team166.robot;
 
 import org.usfirst.frc.team166.robot.commands.CancelDriveCommand;
 import org.usfirst.frc.team166.robot.commands.DriveInSquare;
+import org.usfirst.frc.team166.robot.commands.DriveLeft;
+import org.usfirst.frc.team166.robot.commands.DriveRight;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
@@ -12,14 +14,23 @@ import edu.wpi.first.wpilibj.buttons.JoystickButton;
  */
 public class OI {
 	private Joystick threeAxisJoy = new Joystick(0);
+	private Joystick xbox = new Joystick (1);
 
 	public OI() {
+		JoystickButton xboxButtonA = new JoystickButton(xbox, 1);
+		JoystickButton xboxButtonB = new JoystickButton(xbox, 2);
+		JoystickButton xboxButtonX = new JoystickButton(xbox, 3);
 		JoystickButton button1 = new JoystickButton(threeAxisJoy, 1);
 		JoystickButton button2 = new JoystickButton(threeAxisJoy, 2);
+		xboxButtonA.whenPressed(new CancelDriveCommand());
+		xboxButtonB.whileHeld(new DriveRight());
+		xboxButtonX.whileHeld(new DriveLeft());
 		button1.whenPressed(new DriveInSquare());
 		button2.whenPressed(new CancelDriveCommand());
 	}
-
+	public Joystick getXbox() {
+		return xbox;
+	}
 	public Joystick getJoystick() {
 		return threeAxisJoy;
 	}
