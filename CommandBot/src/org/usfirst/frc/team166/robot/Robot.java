@@ -1,5 +1,6 @@
 package org.usfirst.frc.team166.robot;
 
+import org.usfirst.frc.team166.robot.commands.Autonomous;
 import org.usfirst.frc.team166.robot.subsystems.DriveTrain;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -23,7 +24,10 @@ public class Robot extends IterativeRobot {
 
 	PowerDistributionPanel pdp = new PowerDistributionPanel();
 
-	Command autonomousCommand;
+	Command autonomousCommand = new Autonomous();
+
+
+	
 
 	/**
 	 * This function is run when the robot is first started up and should be

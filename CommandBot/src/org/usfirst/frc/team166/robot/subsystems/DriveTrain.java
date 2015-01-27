@@ -28,7 +28,9 @@ public class DriveTrain extends Subsystem {
 	RobotDrive robotDrive;
 	public Gyro gyro;
 	PowerDistributionPanel pdp;
-	AnalogInput rangefinder;
+	AnalogInput leftUS;
+	AnalogInput rightUS;
+	AnalogInput frontUS;
 	AnalogInput analogTester;
 	BuiltInAccelerometer accel;
 	double gyroOffset;
@@ -48,13 +50,16 @@ public class DriveTrain extends Subsystem {
 	boolean isUserButtonFPS = false;
 	double derp;
 	double USDistance;
+	double averageCurrent;
+	double joystickScaler;
+	double centerOffsetDistance;
 	int driveMode = 0;
 	public DriveTrain() {
 
 
 		// The Talon on the driver station that the joystick is connected to
 		final int joystickChannel = 0;
-		
+		pdp = new PowerDistributionPanel();
 		//SPEED CONTROLLERS
 		rearLeftTalon = new Talon(0);
 		rearRightTalon = new Talon(1);
@@ -84,8 +89,9 @@ public class DriveTrain extends Subsystem {
 		rearRightPID = new PIDSpeedController(rearRightEncoder,rearRightTalon,"rearRight");
 		
 		//OTHER SENSORS
-		rangefinder = new AnalogInput(3);
-		analogTester = new AnalogInput(1);
+		frontUS = new AnalogInput(1);
+		rightUS = new AnalogInput(2);
+		leftUS = new AnalogInput(3);
 		accel = new BuiltInAccelerometer();
 		gyro = new Gyro(0);
 		//DRIVE DECLARATION
@@ -98,9 +104,14 @@ public class DriveTrain extends Subsystem {
 	}
 	
 	public void mecanumDrive(Joystick stick) {
+		printPDPAverageCurrent();
+		joystickScaler = Preferences.getInstance().getDouble("joystickScaler", 1);
 		if((Math.abs(stick.getX()) > .1) || (Math.abs(stick.getY()) > .1) || (Math.abs(stick.getRawAxis(3)) > .1)){
 			if(Math.abs(stick.getRawAxis(3)) > .1){
-				robotDrive.mecanumDrive_Cartesian(stick.getX(), stick.getY(),stick.getRawAxis(3), 0);
+				robotDrive.mecanumDrive_Cartesian(stick.getX() * joystickScaler, stick.getY() * joystickScaler,stick.getRawAxis(3) * joystickScaler, 0);
+//				robotDrive.mecanumDrive_Cartesian((stick.getX()/Math.abs(stick.getX())) * Math.min(Math.abs(stick.getX()),.85),
+//						(stick.getY()/Math.abs(stick.getY())) * Math.min(Math.abs(stick.getY()),.85),
+//						(stick.getRawAxis(3)/Math.abs(stick.getRawAxis(3))) * Math.min(Math.abs(stick.getRawAxis(3)),.85), 0);
 				driveMode = 0; //using joy for all
 			}
 			else{
@@ -112,10 +123,15 @@ public class DriveTrain extends Subsystem {
 				if(Math.abs(gyroOffset) > 1){
 					gyroOffset = (Math.abs(gyroOffset)/gyroOffset);
 				}
-				robotDrive.mecanumDrive_Cartesian(stick.getX(),stick.getY(),-gyroOffset,0);
+				robotDrive.mecanumDrive_Cartesian(stick.getX()*joystickScaler,stick.getY()*joystickScaler,-gyroOffset,0);
 			}
 			SmartDashboard.putNumber("DriveMode", driveMode);
 			
+		}
+		else
+		{
+			robotDrive.mecanumDrive_Cartesian(0, 0, 0, 0);
+			gyro.reset();
 		}
 	}
 	public void xboxDrive(Joystick xbox) {
@@ -131,18 +147,58 @@ public class DriveTrain extends Subsystem {
 		}
 		robotDrive.mecanumDrive_Cartesian(Preferences.getInstance().getDouble("StrafePower", 0) * direction,0,-gyroOffset,0);
 	}
-
-	public void driveAngle(int angle) {
-		robotDrive
-				.mecanumDrive_Polar(
-						Preferences.getInstance().getDouble("OldManSpeed", 0),
-						angle, 0);
+	public void resetIntegral(){
+		frontLeftPID.reset();
+		frontRightPID.reset();
+		rearLeftPID.reset();
+		rearRightPID.reset();
 	}
-
-	public double getDistance() {
-		USDistance = rangefinder.getAverageVoltage() * Preferences.getInstance().getDouble("USConstant", 102.0408163265306);
-		SmartDashboard.putNumber("Distance Volts", rangefinder.getAverageVoltage());
-		SmartDashboard.putNumber("Distance", USDistance);
+	public void driveAngle(int angle) {
+		//robotDrive.mecanumDrive_Polar(Preferences.getInstance().getDouble("OldManSpeed", 0),angle, 0);
+		robotDrive.mecanumDrive_Cartesian(0,Preferences.getInstance().getDouble("OldManSpeed", 0),0,0);
+	}
+	public void driveToStep(){
+		gyroOffset = (getGyro() * Preferences.getInstance().getDouble("GyroStrafeConstant", .01111111111));
+		if(Math.abs(gyroOffset) > 1){
+			gyroOffset = (Math.abs(gyroOffset)/gyroOffset);
+		}
+		robotDrive.mecanumDrive_Cartesian(0 , Preferences.getInstance().getDouble("fastAutoSpeed", -.25), -gyroOffset, 0);
+	}
+	public void centerOnStep(){
+		gyroOffset = (getGyro() * Preferences.getInstance().getDouble("GyroStrafeConstant", .01111111111));
+		if(Math.abs(gyroOffset) > 1){
+			gyroOffset = (Math.abs(gyroOffset)/gyroOffset);
+		}
+		centerOffsetDistance = getRightUS() - getLeftUS();
+		robotDrive.mecanumDrive_Cartesian(centerOffsetDistance / Preferences.getInstance().getDouble("USCenterDistanceConstant", 27.5) , 0, -gyroOffset, 0);
+	}
+	public boolean isCentered(){
+		return (Math.abs(getRightUS() - getLeftUS()) < 1);
+	}
+	public void stopMotors(){
+		robotDrive.mecanumDrive_Cartesian(0,0,0,0);
+	}
+	public void printDistances(){
+		USDistance = rightUS.getAverageVoltage() * Preferences.getInstance().getDouble("USConstant", 102.0408163265306);
+		SmartDashboard.putNumber("rightUS", USDistance);
+		USDistance = leftUS.getAverageVoltage() * Preferences.getInstance().getDouble("USConstant", 102.0408163265306);
+		SmartDashboard.putNumber("leftUS", USDistance);
+		USDistance = frontUS.getAverageVoltage() * Preferences.getInstance().getDouble("USConstant", 102.0408163265306);
+		SmartDashboard.putNumber("frontUS", USDistance);
+	}
+	public double getRightUS() {
+		USDistance = rightUS.getAverageVoltage() * Preferences.getInstance().getDouble("USConstant", 102.0408163265306);
+		SmartDashboard.putNumber("rightUS", USDistance);
+		return USDistance;
+	}
+	public double getLeftUS() {
+		USDistance = leftUS.getAverageVoltage() * Preferences.getInstance().getDouble("USConstant", 102.0408163265306);
+		SmartDashboard.putNumber("leftUS", USDistance);
+		return USDistance;
+	}
+	public double getFrontUS() {
+		USDistance = frontUS.getAverageVoltage() * Preferences.getInstance().getDouble("USConstant", 102.0408163265306);
+		SmartDashboard.putNumber("frontUS", USDistance);
 		return USDistance;
 	}
 	public void printAnalogValue() {
@@ -162,6 +218,7 @@ public class DriveTrain extends Subsystem {
 		SmartDashboard.putNumber("Gyro Rate", gyro.getRate());
 		return gyro.getAngle();
 	}
+	
 	public void printEncoderValues(){
 		double inchesTraveled = (frontLeftEncoder.getDistance() / 1024) * (2 * Preferences.getInstance().getDouble("WheelRadius", 3) * Math.PI);
 		SmartDashboard.putNumber("Inches Traveled", inchesTraveled);
@@ -178,10 +235,22 @@ public class DriveTrain extends Subsystem {
 	public void getDistanceTraveled(){
 //		private double XDistance = accel.getX()
 	}
+	public double getPDPAverageCurrent(){
+		//averageCurrent = ((pdp.getCurrent(0) + pdp.getCurrent(1) + pdp.getCurrent(2) +pdp.getCurrent(3)) / 4);
+		averageCurrent = pdp.getCurrent(0);
+		
+		SmartDashboard.putNumber("Average Current", averageCurrent);
+		return averageCurrent;
+	}
+	public void printPDPAverageCurrent(){
+		//averageCurrent = ((pdp.getCurrent(0) + pdp.getCurrent(1) + pdp.getCurrent(2) +pdp.getCurrent(3)) / 4);
+		averageCurrent = pdp.getCurrent(0);
+		SmartDashboard.putNumber("Average Current", averageCurrent);
+	}
 	public void setPIDConstants(){
 		frontLeftPID.setConstants();
-		//frontRightPID.setConstants();
-		//rearLeftPID.setConstants();
+		frontRightPID.setConstants();
+		rearLeftPID.setConstants();
 		rearRightPID.setConstants();
 	}
 
