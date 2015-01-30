@@ -13,7 +13,7 @@ public class PIDSpeedController implements SpeedController {
 	public PIDSpeedController(PIDSource source,PIDOutput output,String controllerName){
 //		controller = new PIDController(Preferences.getInstance().getDouble("P", 0),Preferences.getInstance().getDouble("I", 0),
 //				Preferences.getInstance().getDouble("D", 0),Preferences.getInstance().getDouble("F", 0),source,output);
-		controller = new PIDController(2,0,0,1,source,output);
+		controller = new PIDController(1.5,.25,0,1,source,output);
 		//LiveWindow.addActuator("Drive", "FrontLeft", controller);
 		LiveWindow.addActuator("Drive", controllerName, controller);
 		
@@ -28,7 +28,6 @@ public class PIDSpeedController implements SpeedController {
 		//Never Used
 		
 	}
-
 	@Override
 	public double get() {
 		
@@ -36,6 +35,10 @@ public class PIDSpeedController implements SpeedController {
 		return controller.getSetpoint();
 	}
 
+	public void reset(){
+		controller.reset();
+	}
+	
 	@Override
 	public void set(double setpoint, byte syncGroup) {
 		controller.setSetpoint(setpoint);
